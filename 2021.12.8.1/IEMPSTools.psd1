@@ -78,6 +78,8 @@
     'Test-ElevatedMode'
     'Test-PortOpen'
     'Test-WinRM'
+    'Update-PathEnvironmentVariable'
+    'Update-Sysinternals'
     'Use-ElevatedMode'
     'restart-servers'
   )

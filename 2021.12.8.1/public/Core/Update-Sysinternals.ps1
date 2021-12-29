@@ -1,22 +1,15 @@
-﻿function Update-Sysinternals {
+function Update-Sysinternals {
   param (
-    [string]
     $Uri = 'https://download.sysinternals.com/files/SysinternalsSuite.zip',
-    [string]
     $OutFile = "$($env:HomeDrive)$($env:HOMEPATH)\Downloads\SysinternalsSuite.zip",
-    [string]
     $Destination = "$env:HomeDrive\SysInternals",
     [switch]
     $RemoveDownloadFile
   )
 
   try {
-  # Download the new zip file of tools
-  Invoke-WebRequest -Uri $Uri -OutFile $OutFile -Verbose
-  } catch {
-    "Cannot connect to: $Uri, please ensure you are connected to the Internet."
-  }
-  try {
+    # Download the new zip file of tools
+    Invoke-WebRequest -Uri $Uri -OutFile $OutFile -Verbose -ErrorAction Stop
     # Get the list of files before the update
     if (!(Test-Path -Path $Destination)) {
       $null = New-Item -Path $Destination -ItemType Directory -Force
@@ -28,28 +21,45 @@
     if ($Running) {
       $Running | Stop-Process -Force -Verbose
     }
-    Expand-Archive -LiteralPath $OutFile -DestinationPath $Destination -Force
-    $FilesUpdate = Get-ChildItem -Path $Destination
+    Add-Type -AN System.IO.Compression.FileSystem
+    $zip = [IO.Compression.ZipFile]::OpenRead($OutFile)
+    $extractedCount = 0
+    if ($null -eq $Files) {
+      $missingFiles = $zip.Entries
+    } else {
+      $fileDiff = Compare-Object -ReferenceObject $Files.Name -DifferenceObject $zip.Entries.Name | Where-Object { $_.SideIndicator -eq '=>' } | Select-Object -ExpandProperty InputObject
+      $missingFiles = $zip.Entries | Where-Object { $_.Name -in $fileDiff }
+    }
+    $missingFiles |
+    ForEach-Object {
+      #Extract the selected item(s)
+      Write-Verbose -Message ('Extracting missing file: {0}' -f $_.Name) -Verbose
+      $ExtractFileName = $_.Name
+      $ExtractFileNamePath = ("$Destination\$ExtractFileName")
+      [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, $ExtractFileNamePath, $true)
+      $extractedCount++
+    }
+    $filter = Get-ChildItem -Path $OutFile | Select-Object LastWriteTime | Sort-Object LastWriteTime | Select-Object -ExpandProperty LastWriteTime -Last 1
+    $newFiles = $zip.Entries | Where-Object { $_.LastWriteTime -gt $filter }
+    $newFiles |
+    ForEach-Object {
+      #Extract the selected item(s)
+      Write-Verbose -Message ('Extracting updated file: {0}' -f $_.Name) -Verbose
+      $ExtractFileName = $_.Name
+      $ExtractFileNamePath = ("$Destination\$ExtractFileName")
+      [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, $ExtractFileNamePath, $true)
+      $extractedCount++
+    }
+    Write-Verbose -Message ('Extracted {0} files.' -f $extractedCount) -Verbose
     #Check that destination of files is in the environment Path variable
     Update-PathEnvironmentVariable -NewPath $Destination -UpdateRegistry
-    if ($null -eq $Files) {
-      $Updates = $FilesUpdate |
-        ForEach-Object { $_ } | Select-Object Name, CreationTime
-    } else {
-      $Updates = Compare-Object -ReferenceObject $Files -DifferenceObject $FilesUpdate |
-        Select-Object -ExpandProperty InputObject |
-        ForEach-Object { Get-ChildItem -Path $Destination\$_ } | Select-Object Name, CreationTime
-    }
-    if ($Updates) {
-      Write-Host 'Updated the following commands:'
-      $Updates
-    }
     if ($RemoveDownloadFile) {
       Remove-Item -Path $OutFile -Force
     }
   } Catch {
     Write-Warning -Message $_
   } finally {
+    $zip.Dispose()
     # Restart any applications that were running previously
     if ($Paths) {
       $Paths | ForEach-Object { Start-Process -FilePath $_.Path }

@@ -1,7 +1,10 @@
 function Update-Sysinternals {
   param (
+    [string]
     $Uri = 'https://download.sysinternals.com/files/SysinternalsSuite.zip',
+    [string]
     $OutFile = "$($env:HomeDrive)$($env:HOMEPATH)\Downloads\SysinternalsSuite.zip",
+    [string]
     $Destination = "$env:HomeDrive\SysInternals",
     [switch]
     $RemoveDownloadFile

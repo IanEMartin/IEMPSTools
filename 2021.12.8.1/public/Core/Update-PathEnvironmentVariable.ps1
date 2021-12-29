@@ -76,21 +76,20 @@ function Update-PathEnvironmentVariable {
       $PathRegistryEnvString = $PathRegistryEnvString -replace '^\s*PATH\s*REG_EXPAND_SZ\s*', ''
       $PathRegistryEnvString = $PathRegistryEnvString -replace ';;', ';'
       $PathRegistryEnvString
-    } else {
-      # Update current environment only
-      $currentEnvironmentPath = $env:PATH
-      $currentEnvironmentPath = $currentEnvironmentPath | Where-Object { $_ -ne '' } | Sort-Object
-      $currentEnvironmentPathSplit = $currentEnvironmentPath -split ';'
-      if ($NewPath -in $currentEnvironmentPathSplit) {
-        $newPathExists = $true
-      }
-      if ($newPathExists) {
-        Write-Verbose -Message ('New Path already in environment paths.  No changes made.') -Verbose
-      } else {
-        $env:PATH = "$env:PATH;$NewPath"
-      }
-      $env:PATH
     }
+    # Update current environment
+    $currentEnvironmentPath = $env:PATH
+    $currentEnvironmentPath = $currentEnvironmentPath | Where-Object { $_ -ne '' } | Sort-Object
+    $currentEnvironmentPathSplit = $currentEnvironmentPath -split ';'
+    if ($NewPath -in $currentEnvironmentPathSplit) {
+      $newPathExists = $true
+    }
+    if ($newPathExists) {
+      Write-Verbose -Message ('New Path already in environment paths.  No changes made.') -Verbose
+    } else {
+      $env:PATH = "$env:PATH;$NewPath"
+    }
+    $env:PATH
   } catch {
     Write-Warning -Message $_
   }

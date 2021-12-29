@@ -63,19 +63,23 @@ function Update-PathEnvironmentVariable {
     $NewRegistryEnvString = $NewRegistryEnvStringSplit -join ';'
     # $NewRegistryEnvString
     if ($UpdateRegistry) {
-      # Set the registry key
-      Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $NewRegistryEnvString
-      $result = REG QUERY 'HKLM\System\CurrentControlSet\Control\Session Manager\Environment' /V PATH
-      $PathRegistryEnvString = $null
-      $result |
-        ForEach-Object {
-          if(!([string]::IsNullOrEmpty($_) -or $_ -match 'HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Session Manager\\Environment')) {
-            $PathRegistryEnvString += $_
+      if ($newPathExists) {
+        Write-Verbose -Message ('Path already in stored environment paths.  No changes made.') -Verbose
+      } else {
+        # Set the registry key
+        Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $NewRegistryEnvString
+        $result = REG QUERY 'HKLM\System\CurrentControlSet\Control\Session Manager\Environment' /V PATH
+        $PathRegistryEnvString = $null
+        $result |
+          ForEach-Object {
+            if(!([string]::IsNullOrEmpty($_) -or $_ -match 'HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Session Manager\\Environment')) {
+              $PathRegistryEnvString += $_
+            }
           }
-        }
-      $PathRegistryEnvString = $PathRegistryEnvString -replace '^\s*PATH\s*REG_EXPAND_SZ\s*', ''
-      $PathRegistryEnvString = $PathRegistryEnvString -replace ';;', ';'
-      $PathRegistryEnvString
+        $PathRegistryEnvString = $PathRegistryEnvString -replace '^\s*PATH\s*REG_EXPAND_SZ\s*', ''
+        $PathRegistryEnvString = $PathRegistryEnvString -replace ';;', ';'
+        $PathRegistryEnvString
+      }
     }
     # Update current environment
     $currentEnvironmentPath = $env:PATH
@@ -85,7 +89,7 @@ function Update-PathEnvironmentVariable {
       $newPathExists = $true
     }
     if ($newPathExists) {
-      Write-Verbose -Message ('New Path already in environment paths.  No changes made.') -Verbose
+      Write-Verbose -Message ('Path already in current environment paths.  No changes made.') -Verbose
     } else {
       $env:PATH = "$env:PATH;$NewPath"
     }

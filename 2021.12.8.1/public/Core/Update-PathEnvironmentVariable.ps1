@@ -69,17 +69,8 @@ function Update-PathEnvironmentVariable {
         # Set the registry key
         Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $NewRegistryEnvString
         Write-Verbose -Message ('[{0}] added to current environment paths.' -f $NewPath) -Verbose
-        $result = REG QUERY 'HKLM\System\CurrentControlSet\Control\Session Manager\Environment' /V PATH
-        $PathRegistryEnvString = $null
-        $result |
-          ForEach-Object {
-            if(!([string]::IsNullOrEmpty($_) -or $_ -match 'HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Session Manager\\Environment')) {
-              $PathRegistryEnvString += $_
-            }
-          }
-        $PathRegistryEnvString = $PathRegistryEnvString -replace '^\s*PATH\s*REG_EXPAND_SZ\s*', ''
-        $PathRegistryEnvString = $PathRegistryEnvString -replace ';;', ';'
-        $PathRegistryEnvString
+        $result = Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH
+        $result.Path
       }
     }
     # Update current environment

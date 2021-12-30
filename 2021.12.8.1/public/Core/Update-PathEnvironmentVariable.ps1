@@ -68,6 +68,7 @@ function Update-PathEnvironmentVariable {
       } else {
         # Set the registry key
         Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $NewRegistryEnvString
+        Write-Verbose -Message ('[{0}] added to current environment paths.' -f $NewPath) -Verbose
         $result = REG QUERY 'HKLM\System\CurrentControlSet\Control\Session Manager\Environment' /V PATH
         $PathRegistryEnvString = $null
         $result |
@@ -92,6 +93,7 @@ function Update-PathEnvironmentVariable {
       Write-Verbose -Message ('Path already in current environment paths.  No changes made.') -Verbose
     } else {
       $env:PATH = "$env:PATH;$NewPath"
+      Write-Verbose -Message ('[{0}] added to current environment paths.' -f $NewPath) -Verbose
     }
     $env:PATH
   } catch {

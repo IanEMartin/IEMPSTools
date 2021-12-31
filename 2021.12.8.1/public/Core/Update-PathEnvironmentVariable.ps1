@@ -1,15 +1,25 @@
 function Update-PathEnvironmentVariable {
   param (
+  [Parameter(Mandatory)]
+  [ValidateScript( {
+      if ($_ -match '^[C-Zc-z]{1}:\\[\w+|\w+\\]*') {
+        $true
+      } else {
+        Throw 'Path provided must be standard windows path format (example: d:\Dir1\Dir2\Dir3)'
+      }
+    })]
     [string]
-    $NewPath = '',
+    $NewPath,
     [switch]
     $UpdateRegistry,
     [switch]
     $Clean
   )
+
   $newPathExists = $false
   $result = $null
   try {
+    $NewPath = $NewPath.Trim()
     $result = REG QUERY 'HKLM\System\CurrentControlSet\Control\Session Manager\Environment' /V PATH
     if ([string]::IsNullOrEmpty($result)) {
       throw 'Unable to retrieve current path variable from registry.'

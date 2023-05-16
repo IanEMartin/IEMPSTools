@@ -19,7 +19,7 @@ function Ping-HostToLog {
         $counter = 0
         Do {
             $counter++
-            if ($counter -gt $Count) {
+            if ($Count -and $counter -eq $Count) {
                 $keepGoing = $false
             }
             $logfile = "$Path$($remoteHost)_$(Get-Date -f 'yyyy-MM-dd').log"

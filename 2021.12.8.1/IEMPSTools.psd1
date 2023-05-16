@@ -69,6 +69,7 @@
     'Join-PSObject'
     'New-IsoFile'
     'Out-Log'
+    'Ping-HostToLog'
     'Remove-ExtraFiles'
     'Remove-MisMatchedCertificate'
     'Remove-PersistedCredential'

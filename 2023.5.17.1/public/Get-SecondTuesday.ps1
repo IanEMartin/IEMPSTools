@@ -4,10 +4,9 @@ function Get-SecondTuesday {
   param
   (
     [int]
-    $Month,
-
+    $Month = (Get-Date -Format 'MM'),
     [int]
-    $Year
+    $Year = (Get-Date -Format 'yyyy')
   )
 
   [int]$Day = 1
